@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+{% block title %}Players - IPL Auction{% endblock %}
+{% block extra_css %}
+<style>
+.page-header {
+    background: linear-gradient(135deg, rgba(13,27,75,0.9), rgba(10,14,39,0.95));
+    border-bottom: 1px solid var(--border);
+    padding: 3rem 2rem 2rem;
+}
+
+.page-header-inner { max-width: 1400px; margin: 0 auto; }
+
+.filters-bar {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    max-width: 1400px;
+    margin: -1px auto 2rem;
+    display: flex; flex-wrap: wrap; gap: 12px;
+    align-items: center;
+}
+
+.filter-group {
+    display: flex; flex-direction: column; gap: 4px;
+}
+
+.filter-label {
+    font-size: 10px; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 1px;
+}
+
+.filter-select, .filter-input {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 12px;
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+    min-width: 130px;
+}
+
+.filter-select:focus, .filter-input:focus {
+    border-color: var(--gold);
+}
+
+.filter-select option { background: var(--blue-deep); }
+
+.search-box {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 12px;
+    flex: 1; min-width: 200px;
+    transition: border-color 0.2s;
+}
+
+.search-box:focus-within { border-color: var(--gold); }
+
+.search-box i { color: var(--text-dim); font-size: 13px; }
+
+.search-box input {
+    background: none; border: none;
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    font-size: 13px;
+    outline: none;
+    flex: 1;
+}
+
+.results-info {
+    max-width: 1400px; margin: 0 auto 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+}
+
+.player-grid {
+    max-width: 1400px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    padding: 0 2rem 4rem;
+}
+
+.player-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+}
+
+.player-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255,215,0,0.5);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+}
+
+.player-img {
+    height: 200px;
+    background: linear-gradient(135deg, var(--blue-mid), var(--blue-bright));
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.player-img img {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: top;
+}
+
+.player-img-fallback {
+    font-size: 72px; color: rgba(255,215,0,0.15);
+}
+
+.player-status-overlay {
+    position: absolute; top: 10px; right: 10px;
+}
+
+.sold-watermark {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.5);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 28px; font-weight: 900;
+    color: var(--green);
+    opacity: 0;
+    transition: opacity 0.3s;
+    letter-spacing: 4px;
+}
+
+.player-card:hover .sold-watermark { opacity: 1; }
+
+.player-body { padding: 1.2rem; }
+
+.player-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 20px; font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.player-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+
+.player-team {
+    font-size: 12px; color: var(--text-dim);
+    margin-bottom: 12px;
+}
+
+.player-stats {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.pstat {
+    background: rgba(255,255,255,0.04);
+    border-radius: 6px;
+    padding: 6px 8px;
+    text-align: center;
+}
+
+.pstat-val {
+    font-size: 15px; font-weight: 700;
+    color: var(--accent2);
+}
+
+.pstat-val.sr { color: var(--gold); }
+.pstat-lbl { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+
+.player-price-row {
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+}
+
+.price-block { }
+.price-lbl { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.price-val { font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 700; color: var(--gold); }
+
+.no-results {
+    max-width: 1400px; margin: 4rem auto;
+    text-align: center; color: var(--text-dim);
+    padding: 4rem 2rem;
+}
+
+.no-results i { font-size: 48px; margin-bottom: 1rem; opacity: 0.3; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-inner">
+        <h1 class="section-title" style="margin-bottom:0.5rem">All <span>Players</span></h1>
+        <p style="color:var(--text-dim);font-size:14px">Browse and bid on IPL's finest cricketers</p>
+    </div>
+</div>
+
+<div style="padding: 1.5rem 2rem 0; max-width:1400px; margin:0 auto;">
+    <form method="GET" action="/players">
+        <div class="filters-bar">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" name="search" placeholder="Search players..." value="{{ filters.search or '' }}">
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-label">Role</div>
+                <select name="role" class="filter-select" onchange="this.form.submit()">
+                    <option value="">All Roles</option>
+                    {% for r in roles %}
+                    <option value="{{ r }}" {% if filters.role == r %}selected{% endif %}>{{ r }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-label">Nationality</div>
+                <select name="nationality" class="filter-select" onchange="this.form.submit()">
+                    <option value="">All Countries</option>
+                    {% for n in nationalities %}
+                    <option value="{{ n }}" {% if filters.nationality == n %}selected{% endif %}>{{ n }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-label">Status</div>
+                <select name="status" class="filter-select" onchange="this.form.submit()">
+                    <option value="">All Status</option>
+                    <option value="available" {% if filters.status == 'available' %}selected{% endif %}>Available</option>
+                    <option value="live" {% if filters.status == 'live' %}selected{% endif %}>Live</option>
+                    <option value="sold" {% if filters.status == 'sold' %}selected{% endif %}>Sold</option>
+                    <option value="unsold" {% if filters.status == 'unsold' %}selected{% endif %}>Unsold</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-label">Sort By</div>
+                <select name="sort" class="filter-select" onchange="this.form.submit()">
+                    <option value="auction_order" {% if filters.sort == 'auction_order' %}selected{% endif %}>Auction Order</option>
+                    <option value="strike_rate" {% if filters.sort == 'strike_rate' %}selected{% endif %}>↑ Strike Rate</option>
+                    <option value="batting_avg" {% if filters.sort == 'batting_avg' %}selected{% endif %}>↑ Batting Avg</option>
+                    <option value="base_price_desc" {% if filters.sort == 'base_price_desc' %}selected{% endif %}>↑ Base Price</option>
+                    <option value="base_price_asc" {% if filters.sort == 'base_price_asc' %}selected{% endif %}>↓ Base Price</option>
+                    <option value="name" {% if filters.sort == 'name' %}selected{% endif %}>Name A-Z</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-gold" style="align-self:flex-end">Apply</button>
+            <a href="/players" class="btn btn-outline" style="align-self:flex-end">Reset</a>
+        </div>
+    </form>
+</div>
+
+<div style="padding: 0 2rem; max-width:1400px; margin: 0 auto 1rem;">
+    <div class="results-info">
+        <span style="color:var(--text-dim);font-size:14px">
+            Showing <strong style="color:var(--text)">{{ players|length }}</strong> player{{ 's' if players|length != 1 }}
+        </span>
+        <div style="display:flex;gap:10px;">
+            <span class="badge badge-available">{{ players|selectattr('status','equalto','available')|list|length }} Available</span>
+            <span class="badge badge-live">{{ players|selectattr('status','equalto','live')|list|length }} Live</span>
+            <span class="badge badge-sold">{{ players|selectattr('status','equalto','sold')|list|length }} Sold</span>
+        </div>
+    </div>
+</div>
+
+{% if players %}
+<div class="player-grid">
+    {% for player in players %}
+    <a href="/player/{{ player.id }}" class="player-card">
+        <div class="player-img">
+            {% if player.image_url %}
+            <img src="{{ player.image_url }}" alt="{{ player.name }}"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="player-img-fallback" style="display:none;"><i class="fas fa-user-circle"></i></div>
+            {% else %}
+            <div class="player-img-fallback"><i class="fas fa-user-circle"></i></div>
+            {% endif %}
+            <div class="player-status-overlay">
+                {% if player.status == 'live' %}
+                <span class="badge badge-live">🔴 LIVE</span>
+                {% elif player.status == 'sold' %}
+                <span class="badge badge-sold">✓ SOLD</span>
+                {% elif player.status == 'unsold' %}
+                <span class="badge badge-unsold">UNSOLD</span>
+                {% endif %}
+            </div>
+            {% if player.status == 'sold' %}
+            <div class="sold-watermark">SOLD ✓</div>
+            {% endif %}
+        </div>
+        <div class="player-body">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+                <div class="player-name">{{ player.name }}</div>
+                <span class="badge badge-{{ player.nationality == 'Indian' and 'indian' or 'overseas' }}" style="flex-shrink:0">
+                    {{ 'IND' if player.nationality == 'Indian' else 'OS' }}
+                </span>
+            </div>
+            <div class="player-tags">
+                <span class="badge badge-{{ player.role|lower|replace(' ','')|replace('-','')|replace('wicketkeeper','wk') }}">{{ player.role }}</span>
+            </div>
+            <div class="player-team"><i class="fas fa-shield-halved" style="margin-right:4px;opacity:0.5"></i>{{ player.team }}</div>
+
+            {% if player.role in ['Batsman','Wicket-Keeper','All-Rounder'] and player.matches > 0 %}
+            <div class="player-stats">
+                <div class="pstat">
+                    <div class="pstat-val sr">{{ player.strike_rate or '—' }}</div>
+                    <div class="pstat-lbl">SR</div>
+                </div>
+                <div class="pstat">
+                    <div class="pstat-val">{{ player.batting_avg or '—' }}</div>
+                    <div class="pstat-lbl">AVG</div>
+                </div>
+                <div class="pstat">
+                    <div class="pstat-val">{{ player.runs_scored or '—' }}</div>
+                    <div class="pstat-lbl">RUNS</div>
+                </div>
+            </div>
+            {% elif player.role == 'Bowler' and player.matches > 0 %}
+            <div class="player-stats">
+                <div class="pstat">
+                    <div class="pstat-val sr">{{ player.wickets or '—' }}</div>
+                    <div class="pstat-lbl">WKTs</div>
+                </div>
+                <div class="pstat">
+                    <div class="pstat-val">{{ player.economy or '—' }}</div>
+                    <div class="pstat-lbl">ECON</div>
+                </div>
+                <div class="pstat">
+                    <div class="pstat-val">{{ player.bowling_avg or '—' }}</div>
+                    <div class="pstat-lbl">AVG</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="player-price-row">
+                <div class="price-block">
+                    <div class="price-lbl">Base Price</div>
+                    <div class="price-val">₹{{ player.base_price }} Cr</div>
+                </div>
+                {% if player.status == 'sold' and player.sold_price %}
+                <div style="text-align:right;">
+                    <div class="price-lbl">Sold For</div>
+                    <div style="font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--green)">₹{{ player.sold_price }} Cr</div>
+                </div>
+                {% elif player.status == 'live' and player.current_bid %}
+                <div style="text-align:right;">
+                    <div class="price-lbl">Current Bid</div>
+                    <div style="font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--accent)">₹{{ player.current_bid }} Cr</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="no-results">
+    <i class="fas fa-search"></i>
+    <h3 style="margin-bottom:8px;color:var(--text)">No players found</h3>
+    <p>Try adjusting your filters or search query.</p>
+    <a href="/players" class="btn btn-gold" style="margin-top:1.5rem">Clear Filters</a>
+</div>
+{% endif %}
+{% endblock %}

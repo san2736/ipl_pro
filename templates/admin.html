@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard - IPL Auction{% endblock %}
+{% block extra_css %}
+<style>
+.admin-page { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+.admin-header {
+    background: linear-gradient(135deg, rgba(255,23,68,0.15), rgba(13,27,75,0.9));
+    border: 1px solid rgba(255,23,68,0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+}
+
+.admin-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 2rem; }
+
+.astat {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem;
+    text-align: center;
+}
+
+.astat-num { font-family:'Orbitron',sans-serif; font-size:28px; font-weight:900; color:var(--gold); }
+.astat-lbl { font-size:11px; color:var(--text-dim); margin-top:4px; letter-spacing:1px; text-transform:uppercase; }
+
+.admin-grid { display: grid; grid-template-columns: 1fr 380px; gap: 2rem; }
+
+/* Players table */
+.players-table { width:100%; border-collapse:collapse; }
+.players-table th {
+    background: rgba(255,215,0,0.08);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+}
+
+.players-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.players-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+.action-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.btn-sm { padding: 5px 10px; font-size: 11px; font-weight: 700; border-radius: 4px; border: 1px solid; cursor: pointer; font-family: 'Exo 2', sans-serif; transition: all 0.2s; }
+.btn-live { background: rgba(255,69,0,0.15); border-color: rgba(255,69,0,0.4); color: var(--accent); }
+.btn-live:hover { background: rgba(255,69,0,0.3); }
+.btn-sell { background: rgba(0,230,118,0.15); border-color: rgba(0,230,118,0.4); color: var(--green); }
+.btn-sell:hover { background: rgba(0,230,118,0.25); }
+.btn-unsold { background: rgba(255,23,68,0.1); border-color: rgba(255,23,68,0.3); color: var(--red); }
+.btn-unsold:hover { background: rgba(255,23,68,0.2); }
+.btn-del { background: rgba(255,23,68,0.08); border-color: rgba(255,23,68,0.2); color: rgba(255,23,68,0.7); }
+.btn-del:hover { background: rgba(255,23,68,0.15); }
+
+/* Add player form */
+.add-form { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.add-form-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; color:var(--gold); }
+.add-form-body { padding: 1.25rem; max-height: 80vh; overflow-y: auto; }
+
+.form-group { margin-bottom: 12px; }
+.form-label { display: block; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+.form-control {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-control:focus { border-color: var(--gold); }
+.form-control option { background: var(--blue-deep); }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.table-container { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.table-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.table-header-title { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; color:var(--gold); }
+
+.search-filter {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    font-size: 12px;
+    outline: none;
+}
+
+.table-scroll { overflow-x: auto; }
+
+.tab-bar { display: flex; border-bottom: 1px solid var(--border); }
+.tab { padding: 10px 18px; font-size: 13px; font-weight: 600; color: var(--text-dim); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <div class="admin-header">
+        <div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+                <span style="background:rgba(255,23,68,0.2);border:1px solid rgba(255,23,68,0.5);padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;color:var(--red);letter-spacing:1px">ADMIN</span>
+                <h1 style="font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700">Control Panel</h1>
+            </div>
+            <div style="font-size:13px;color:var(--text-dim)">Manage players, control auction flow, and monitor bids</div>
+        </div>
+        <form method="POST" action="/admin/seed" style="display:inline">
+            <button type="submit" class="btn btn-gold" onclick="return confirm('Seed 16 IPL players?')">
+                <i class="fas fa-database"></i> Seed Players
+            </button>
+        </form>
+    </div>
+
+    <!-- Stats -->
+    <div class="admin-stats">
+        <div class="astat">
+            <div class="astat-num">{{ players|length }}</div>
+            <div class="astat-lbl">Total Players</div>
+        </div>
+        <div class="astat">
+            <div class="astat-num" style="color:var(--accent)">{{ players|selectattr('status','equalto','live')|list|length }}</div>
+            <div class="astat-lbl">Live Now</div>
+        </div>
+        <div class="astat">
+            <div class="astat-num" style="color:var(--green)">{{ players|selectattr('status','equalto','sold')|list|length }}</div>
+            <div class="astat-lbl">Sold</div>
+        </div>
+        <div class="astat">
+            <div class="astat-num" style="color:var(--accent2)">₹{{ "%.1f"|format(sold_value) }}Cr</div>
+            <div class="astat-lbl">Total Value Sold</div>
+        </div>
+    </div>
+
+    <div class="admin-grid">
+        <!-- Players Table -->
+        <div>
+            <div class="table-container">
+                <div class="table-header">
+                    <div class="table-header-title"><i class="fas fa-users"></i> Players</div>
+                    <input type="text" class="search-filter" placeholder="Search..." oninput="filterTable(this.value)" id="search-input">
+                </div>
+                <div class="table-scroll">
+                    <table class="players-table" id="players-table">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Role</th>
+                                <th>Nationality</th>
+                                <th>Base</th>
+                                <th>Status</th>
+                                <th>Current/Sold</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player in players %}
+                            <tr data-name="{{ player.name|lower }}">
+                                <td>
+                                    <div style="font-weight:600">{{ player.name }}</div>
+                                    <div style="font-size:11px;color:var(--text-dim)">{{ player.team }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-{{ player.role|lower|replace(' ','')|replace('-','')|replace('wicketkeeper','wk') }}" style="font-size:10px">{{ player.role }}</span>
+                                </td>
+                                <td style="font-size:12px;color:var(--text-dim)">{{ player.nationality }}</td>
+                                <td style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--gold)">₹{{ player.base_price }}</td>
+                                <td>
+                                    {% if player.status == 'live' %}
+                                    <span class="badge badge-live">LIVE</span>
+                                    {% elif player.status == 'sold' %}
+                                    <span class="badge badge-sold">SOLD</span>
+                                    {% elif player.status == 'unsold' %}
+                                    <span class="badge badge-unsold">UNSOLD</span>
+                                    {% else %}
+                                    <span class="badge badge-available">AVAIL</span>
+                                    {% endif %}
+                                </td>
+                                <td style="font-family:'Orbitron',sans-serif;font-size:12px">
+                                    {% if player.status == 'sold' and player.sold_price %}
+                                    <span style="color:var(--green)">₹{{ player.sold_price }}</span>
+                                    {% elif player.current_bid %}
+                                    <span style="color:var(--accent)">₹{{ player.current_bid }}</span>
+                                    {% else %}-{% endif %}
+                                </td>
+                                <td>
+                                    <div class="action-btns">
+                                        {% if player.status != 'live' and player.status != 'sold' %}
+                                        <form method="POST" action="/admin/player/{{ player.id }}/go-live" style="display:inline">
+                                            <button type="submit" class="btn-sm btn-live">▶ LIVE</button>
+                                        </form>
+                                        {% endif %}
+                                        {% if player.status == 'live' %}
+                                        <form method="POST" action="/admin/player/{{ player.id }}/sell" style="display:inline">
+                                            <button type="submit" class="btn-sm btn-sell" onclick="return confirm('Sell to highest bidder?')">✓ SELL</button>
+                                        </form>
+                                        <form method="POST" action="/admin/player/{{ player.id }}/unsold" style="display:inline">
+                                            <button type="submit" class="btn-sm btn-unsold">✗ UNSOLD</button>
+                                        </form>
+                                        {% endif %}
+                                        <form method="POST" action="/admin/player/{{ player.id }}/delete" style="display:inline">
+                                            <button type="submit" class="btn-sm btn-del" onclick="return confirm('Delete {{ player.name }}?')">🗑</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar: Add Player -->
+        <div>
+            <div class="add-form">
+                <div class="add-form-header"><i class="fas fa-plus"></i> Add New Player</div>
+                <div class="add-form-body">
+                    <form method="POST" action="/admin/player/add">
+                        <div class="form-group">
+                            <label class="form-label">Player Name *</label>
+                            <input type="text" name="name" class="form-control" required placeholder="Full name">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">IPL Team</label>
+                            <select name="team" class="form-control">
+                                <option value="">Select Team</option>
+                                <option>Mumbai Indians</option>
+                                <option>Chennai Super Kings</option>
+                                <option>Royal Challengers Bangalore</option>
+                                <option>Kolkata Knight Riders</option>
+                                <option>Delhi Capitals</option>
+                                <option>Rajasthan Royals</option>
+                                <option>Punjab Kings</option>
+                                <option>Sunrisers Hyderabad</option>
+                                <option>Gujarat Titans</option>
+                                <option>Lucknow Super Giants</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Role *</label>
+                                <select name="role" class="form-control" required>
+                                    <option value="Batsman">Batsman</option>
+                                    <option value="Bowler">Bowler</option>
+                                    <option value="All-Rounder">All-Rounder</option>
+                                    <option value="Wicket-Keeper">Wicket-Keeper</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nationality</label>
+                                <select name="nationality" class="form-control">
+                                    <option value="Indian">Indian</option>
+                                    <option value="Australian">Australian</option>
+                                    <option value="English">English</option>
+                                    <option value="South African">South African</option>
+                                    <option value="West Indian">West Indian</option>
+                                    <option value="Sri Lankan">Sri Lankan</option>
+                                    <option value="New Zealander">New Zealander</option>
+                                    <option value="Pakistani">Pakistani</option>
+                                    <option value="Afghan">Afghan</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Age</label>
+                                <input type="number" name="age" class="form-control" min="16" max="50" value="25">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">IPL Caps</label>
+                                <input type="number" name="ipl_caps" class="form-control" min="0" value="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Batting Style</label>
+                                <select name="batting_style" class="form-control">
+                                    <option>Right-handed</option>
+                                    <option>Left-handed</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Bowling Style</label>
+                                <input type="text" name="bowling_style" class="form-control" placeholder="e.g. Right-arm fast">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Base Price (₹ Cr) *</label>
+                            <input type="number" name="base_price" class="form-control" required step="0.05" min="0.05" value="0.50" placeholder="in Crores">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Image URL</label>
+                            <input type="url" name="image_url" class="form-control" placeholder="https://...">
+                        </div>
+                        <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">— Stats —</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Matches</label>
+                                <input type="number" name="matches" class="form-control" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Runs</label>
+                                <input type="number" name="runs_scored" class="form-control" value="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Batting Avg</label>
+                                <input type="number" name="batting_avg" class="form-control" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Strike Rate ↑</label>
+                                <input type="number" name="strike_rate" class="form-control" step="0.01" value="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Wickets</label>
+                                <input type="number" name="wickets" class="form-control" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Economy</label>
+                                <input type="number" name="economy" class="form-control" step="0.01" value="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">50s</label>
+                                <input type="number" name="fifties" class="form-control" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">100s</label>
+                                <input type="number" name="hundreds" class="form-control" value="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Highest Score</label>
+                                <input type="number" name="highest_score" class="form-control" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Best Bowling</label>
+                                <input type="text" name="best_bowling" class="form-control" value="0/0" placeholder="e.g. 5/22">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="2" placeholder="Brief player bio..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;padding:12px">
+                            <i class="fas fa-plus"></i> Add Player
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterTable(val) {
+    val = val.toLowerCase();
+    document.querySelectorAll('#players-table tbody tr').forEach(row => {
+        row.style.display = row.dataset.name.includes(val) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Register - IPL Auction{% endblock %}
+{% block extra_css %}
+<style>
+.auth-page { min-height:calc(100vh - 64px); display:flex; align-items:center; justify-content:center; padding:2rem; }
+.auth-card { background:var(--card-bg); border:1px solid var(--border); border-radius:20px; padding:2.5rem; width:100%; max-width:460px; backdrop-filter:blur(20px); }
+.auth-icon { width:64px;height:64px;background:linear-gradient(135deg,var(--gold),#FFA500);border-radius:16px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:var(--blue-deep);margin:0 auto 1rem; }
+.auth-title { font-family:'Rajdhani',sans-serif; font-size:28px; font-weight:700; text-align:center; }
+.auth-subtitle { font-size:13px; color:var(--text-dim); margin-top:4px; text-align:center; margin-bottom:2rem; }
+.form-group { margin-bottom:14px; }
+.form-label { display:block;font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px; }
+.form-input { width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:11px 16px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s; }
+.form-input:focus { border-color:var(--gold); }
+.form-input::placeholder { color:rgba(255,255,255,0.25); }
+.auth-submit { width:100%;padding:13px;background:linear-gradient(135deg,var(--gold),#FFA500);border:none;border-radius:8px;color:var(--blue-deep);font-family:'Exo 2',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:6px;letter-spacing:1px; }
+.auth-submit:hover { transform:translateY(-1px);box-shadow:0 6px 20px rgba(255,215,0,0.3); }
+.wallet-info { background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.25);border-radius:8px;padding:12px;margin-bottom:1.5rem;font-size:13px;color:var(--text-dim);text-align:center; }
+.wallet-info strong { color:var(--green); font-size:16px; }
+.auth-footer { text-align:center;margin-top:1.5rem;font-size:13px;color:var(--text-dim); }
+.auth-footer a { color:var(--gold);text-decoration:none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-icon" style="margin:0 auto 1rem">IPL</div>
+        <div class="auth-title">Create Your Team</div>
+        <div class="auth-subtitle">Register to participate in the auction</div>
+
+        <div class="wallet-info">
+            You'll receive <strong>₹1000 Cr</strong> auction budget upon registration
+        </div>
+
+        <form method="POST" action="/register">
+            <div class="form-group">
+                <label class="form-label">Username (Team Name)</label>
+                <input type="text" name="username" class="form-input" required placeholder="Your team name" autofocus>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-input" required placeholder="email@example.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-input" required placeholder="Minimum 8 characters" minlength="8">
+            </div>
+            <button type="submit" class="auth-submit">CREATE ACCOUNT →</button>
+        </form>
+
+        <div class="auth-footer">
+            Already have an account? <a href="/login">Login here</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

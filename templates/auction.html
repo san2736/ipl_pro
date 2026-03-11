@@ -1,0 +1,521 @@
+{% extends "base.html" %}
+{% block title %}Live Auction - IPL 2025{% endblock %}
+{% block extra_css %}
+<style>
+.auction-page { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+.auction-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2rem;
+}
+
+.auction-layout {
+    display: grid; grid-template-columns: 1fr 360px; gap: 2rem;
+}
+
+/* Main stage */
+.auction-stage {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    min-height: 600px;
+    display: flex; flex-direction: column;
+}
+
+.stage-header {
+    background: linear-gradient(135deg, rgba(255,69,0,0.15), rgba(13,27,75,0.9));
+    border-bottom: 1px solid rgba(255,69,0,0.3);
+    padding: 1.25rem 1.75rem;
+    display: flex; align-items: center; gap: 12px;
+}
+
+.stage-live-badge {
+    background: var(--accent);
+    color: white;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px; font-weight: 700; letter-spacing: 2px;
+    padding: 5px 12px; border-radius: 4px;
+    animation: blink-bg 1.5s infinite;
+}
+
+.stage-body {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    padding: 2.5rem;
+}
+
+.no-live {
+    text-align: center; color: var(--text-dim);
+}
+
+.no-live i { font-size: 64px; opacity: 0.2; display: block; margin-bottom: 1.5rem; }
+.no-live h3 { font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+
+.live-player-display {
+    display: grid; grid-template-columns: 220px 1fr; gap: 2.5rem;
+    align-items: center;
+    width: 100%;
+}
+
+.live-player-img {
+    aspect-ratio: 3/4;
+    border-radius: 12px;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--blue-mid), var(--blue-bright));
+    border: 2px solid rgba(255,69,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 40px rgba(255,69,0,0.2);
+}
+
+.live-player-img img {
+    width:100%; height:100%; object-fit:cover; object-position:top;
+}
+
+.live-player-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 32px; font-weight: 900;
+    margin-bottom: 0.5rem;
+    line-height: 1.1;
+}
+
+.live-bid-number {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 52px; font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(255,215,0,0.4);
+    margin: 1rem 0;
+    transition: all 0.3s;
+}
+
+.live-bid-number.updated {
+    transform: scale(1.05);
+    color: var(--accent);
+}
+
+.leading-team {
+    font-size: 14px; color: var(--text-dim); margin-bottom: 1.5rem;
+}
+
+.leading-team span { color: var(--gold); font-weight: 700; font-size: 16px; }
+
+.bid-form-live { display: flex; gap: 10px; margin-bottom: 12px; }
+
+.live-bid-input {
+    flex: 1;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,215,0,0.3);
+    border-radius: 8px;
+    padding: 14px 18px;
+    color: var(--text);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px; font-weight: 700;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.live-bid-input:focus { border-color: var(--gold); box-shadow: 0 0 20px rgba(255,215,0,0.1); }
+
+.btn-bid-big {
+    background: linear-gradient(135deg, var(--accent), #FF6B35);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 14px 24px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px; font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+}
+
+.btn-bid-big:hover { transform: scale(1.03); box-shadow: 0 6px 20px rgba(255,69,0,0.4); }
+
+.quick-bid-bar { display: flex; gap: 8px; }
+
+.qb-btn {
+    flex: 1;
+    background: rgba(255,215,0,0.08);
+    border: 1px solid rgba(255,215,0,0.2);
+    border-radius: 6px;
+    padding: 8px;
+    color: var(--gold);
+    font-family: 'Exo 2', sans-serif;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.qb-btn:hover { background: rgba(255,215,0,0.2); }
+
+/* Sidebar */
+.auction-sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+.sidebar-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.sidebar-card-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px; font-weight: 700;
+    color: var(--gold);
+    display: flex; align-items: center; gap: 8px;
+}
+
+.bid-log {
+    padding: 12px;
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.bid-log-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+    gap: 8px;
+}
+
+.bid-log-item:hover { background: rgba(255,255,255,0.03); }
+.bid-log-item.new { animation: highlight-new 1s ease; }
+
+@keyframes highlight-new {
+    0% { background: rgba(255,215,0,0.15); }
+    100% { background: transparent; }
+}
+
+.bid-log-rank {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: rgba(255,215,0,0.1);
+    border: 1px solid rgba(255,215,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: var(--gold);
+    flex-shrink: 0;
+}
+
+.bid-log-rank.top { background: var(--gold); color: var(--blue-deep); }
+
+.bid-log-team { font-size: 13px; font-weight: 600; flex: 1; }
+.bid-log-amount { font-family: 'Orbitron', sans-serif; font-size: 13px; color: var(--gold); font-weight: 700; }
+
+.next-players { padding: 8px; }
+
+.next-player-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-decoration: none;
+}
+
+.next-player-item:hover { background: rgba(255,255,255,0.04); }
+
+.next-player-img {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--blue-bright);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: rgba(255,215,0,0.3);
+}
+
+.next-player-img img { width:100%;height:100%;object-fit:cover;object-position:top; }
+.next-player-name { font-size: 13px; font-weight: 600; }
+.next-player-price { font-size: 11px; color: var(--text-dim); }
+
+.status-bar {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-dim);
+}
+
+.status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    animation: blink 1.5s infinite;
+}
+
+#live-msg {
+    font-size:13px; min-height:18px; margin-top:8px;
+    font-weight:600;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auction-page">
+    <div class="auction-header">
+        <div>
+            <h1 class="section-title">Live <span>Auction</span> Room</h1>
+            <div class="status-bar" style="margin-top:4px">
+                <div class="status-dot"></div>
+                <span id="connection-status">Connected · Real-time bidding active</span>
+            </div>
+        </div>
+        {% if session.get('user_id') %}
+        <div class="wallet-chip">
+            <i class="fas fa-coins"></i>
+            Your Budget: ₹<span id="my-wallet">—</span> Cr
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="auction-layout">
+        <!-- Stage -->
+        <div class="auction-stage">
+            <div class="stage-header">
+                <div class="stage-live-badge">🔴 LIVE</div>
+                <span style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700" id="stage-title">
+                    {% if live_player %}{{ live_player.name }} is on the block{% else %}Waiting for next player...{% endif %}
+                </span>
+            </div>
+
+            <div class="stage-body" id="stage-body">
+                {% if live_player %}
+                <div class="live-player-display" id="live-display">
+                    <div class="live-player-img">
+                        {% if live_player.image_url %}
+                        <img src="{{ live_player.image_url }}" alt="{{ live_player.name }}"
+                             onerror="this.style.display='none'" id="live-player-img">
+                        {% else %}
+                        <i class="fas fa-user-circle" style="font-size:80px;color:rgba(255,215,0,0.2)"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+                            <span class="badge badge-{{ live_player.role|lower|replace(' ','')|replace('-','')|replace('wicketkeeper','wk') }}">{{ live_player.role }}</span>
+                            <span class="badge badge-{{ live_player.nationality == 'Indian' and 'indian' or 'overseas' }}">{{ live_player.nationality }}</span>
+                        </div>
+                        <div class="live-player-name" id="live-player-name">{{ live_player.name }}</div>
+                        <div style="color:var(--text-dim);font-size:13px;margin-bottom:4px" id="live-player-team">{{ live_player.team }}</div>
+
+                        <div class="live-bid-number" id="live-bid-amount">
+                            ₹{{ "%.2f"|format(live_player.current_bid or live_player.base_price) }} Cr
+                        </div>
+
+                        <div class="leading-team" id="leading-team">
+                            {% if bids %}
+                            Highest Bidder: <span>{{ bids[0].team_name }}</span>
+                            {% else %}
+                            Base Price — No bids yet
+                            {% endif %}
+                        </div>
+
+                        {% if session.get('user_id') %}
+                        <div class="bid-form-live">
+                            <input type="number" class="live-bid-input" id="bid-input"
+                                   placeholder="₹ Cr" step="0.05"
+                                   min="{{ (live_player.current_bid or live_player.base_price) + 0.05 }}">
+                            <button class="btn-bid-big" onclick="placeLiveBid()">HAMMER ↓</button>
+                        </div>
+                        <div class="quick-bid-bar" id="quick-bids">
+                            {% set base = live_player.current_bid or live_player.base_price %}
+                            <button class="qb-btn" onclick="setQ({{ (base+0.05)|round(2) }})">+0.05</button>
+                            <button class="qb-btn" onclick="setQ({{ (base+0.10)|round(2) }})">+0.10</button>
+                            <button class="qb-btn" onclick="setQ({{ (base+0.25)|round(2) }})">+0.25</button>
+                            <button class="qb-btn" onclick="setQ({{ (base+0.50)|round(2) }})">+0.50</button>
+                            <button class="qb-btn" onclick="setQ({{ (base+1.0)|round(2) }})">+1.0</button>
+                        </div>
+                        <div id="live-msg"></div>
+                        {% else %}
+                        <a href="/login" class="btn btn-gold btn-lg" style="margin-top:1rem">Login to Bid</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="no-live" id="no-live-msg">
+                    <i class="fas fa-gavel"></i>
+                    <h3>No Active Auction</h3>
+                    <p>Waiting for the admin to put a player on the block...</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="auction-sidebar">
+            <!-- Bid Log -->
+            <div class="sidebar-card">
+                <div class="sidebar-card-header"><i class="fas fa-bolt"></i> Bid Feed</div>
+                <div class="bid-log" id="bid-log">
+                    {% if bids %}
+                        {% for bid in bids %}
+                        <div class="bid-log-item">
+                            <div class="bid-log-rank {% if loop.index == 1 %}top{% endif %}">{{ loop.index }}</div>
+                            <div class="bid-log-team">{{ bid.team_name }}</div>
+                            <div class="bid-log-amount">₹{{ "%.2f"|format(bid.amount) }}Cr</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div style="text-align:center;padding:1.5rem;color:var(--text-dim);font-size:13px">
+                        No bids yet
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Next Up -->
+            <div class="sidebar-card">
+                <div class="sidebar-card-header"><i class="fas fa-list"></i> Coming Up</div>
+                <div class="next-players">
+                    {% set upcoming = [] %}
+                    {% for p in [] %}{% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const socket = io();
+let currentPlayerId = {{ live_player.id if live_player else 'null' }};
+
+socket.on('connect', () => {
+    socket.emit('join_auction');
+    document.getElementById('connection-status').textContent = 'Connected · Real-time bidding active';
+});
+
+socket.on('disconnect', () => {
+    document.getElementById('connection-status').textContent = 'Reconnecting...';
+});
+
+socket.on('bid_update', function(data) {
+    if (data.player_id == currentPlayerId) {
+        const amountEl = document.getElementById('live-bid-amount');
+        amountEl.textContent = '₹' + data.amount.toFixed(2) + ' Cr';
+        amountEl.classList.add('updated');
+        setTimeout(() => amountEl.classList.remove('updated'), 600);
+
+        document.getElementById('leading-team').innerHTML = 'Highest Bidder: <span>' + data.bidder + '</span>';
+
+        // Update input min
+        const input = document.getElementById('bid-input');
+        if (input) input.min = (data.amount + 0.05).toFixed(2);
+
+        // Update quick bids
+        updateQuickBids(data.amount);
+
+        // Add to log
+        addBidToLog(data.bidder, data.amount);
+    }
+});
+
+socket.on('player_live', function(data) {
+    currentPlayerId = data.player_id;
+    document.getElementById('stage-title').textContent = data.name + ' is on the block';
+
+    const body = document.getElementById('stage-body');
+    body.innerHTML = `
+        <div class="live-player-display">
+            <div class="live-player-img">
+                ${data.image_url ? `<img src="${data.image_url}" alt="${data.name}" onerror="this.style.display='none'">` : '<i class="fas fa-user-circle" style="font-size:80px;color:rgba(255,215,0,0.2)"></i>'}
+            </div>
+            <div>
+                <div class="live-player-name">${data.name}</div>
+                <div style="color:var(--text-dim);font-size:13px;margin-bottom:4px">${data.role}</div>
+                <div class="live-bid-number" id="live-bid-amount">₹${data.base_price.toFixed(2)} Cr</div>
+                <div class="leading-team" id="leading-team">Base Price — No bids yet</div>
+                <div class="bid-form-live">
+                    <input type="number" class="live-bid-input" id="bid-input" placeholder="₹ Cr" step="0.05" min="${(data.base_price + 0.05).toFixed(2)}">
+                    <button class="btn-bid-big" onclick="placeLiveBid()">HAMMER ↓</button>
+                </div>
+                <div class="quick-bid-bar" id="quick-bids">
+                    <button class="qb-btn" onclick="setQ(${(data.base_price+0.05).toFixed(2)})">+0.05</button>
+                    <button class="qb-btn" onclick="setQ(${(data.base_price+0.10).toFixed(2)})">+0.10</button>
+                    <button class="qb-btn" onclick="setQ(${(data.base_price+0.25).toFixed(2)})">+0.25</button>
+                    <button class="qb-btn" onclick="setQ(${(data.base_price+0.50).toFixed(2)})">+0.50</button>
+                    <button class="qb-btn" onclick="setQ(${(data.base_price+1.0).toFixed(2)})">+1.0</button>
+                </div>
+                <div id="live-msg"></div>
+            </div>
+        </div>`;
+
+    document.getElementById('bid-log').innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--text-dim);font-size:13px">No bids yet</div>';
+});
+
+socket.on('player_sold', function(data) {
+    if (data.player_id == currentPlayerId) {
+        const body = document.getElementById('stage-body');
+        body.innerHTML = `
+            <div style="text-align:center;padding:3rem">
+                <div style="font-size:64px;margin-bottom:1rem">🔨</div>
+                <div style="font-family:'Orbitron',sans-serif;font-size:14px;color:var(--gold);letter-spacing:2px;margin-bottom:8px">SOLD!</div>
+                <div style="font-family:'Rajdhani',sans-serif;font-size:36px;font-weight:700;margin-bottom:6px">${data.name}</div>
+                <div style="font-size:14px;color:var(--text-dim);margin-bottom:16px">Goes to <span style="color:var(--gold);font-weight:700">${data.winner}</span></div>
+                <div style="font-family:'Orbitron',sans-serif;font-size:40px;font-weight:900;color:var(--green)">₹${data.sold_price.toFixed(2)} Cr</div>
+            </div>`;
+        document.getElementById('stage-title').textContent = data.name + ' — SOLD!';
+    }
+});
+
+socket.on('player_unsold', function(data) {
+    if (data.player_id == currentPlayerId) {
+        document.getElementById('stage-title').textContent = data.name + ' — UNSOLD';
+    }
+});
+
+function setQ(val) {
+    const input = document.getElementById('bid-input');
+    if (input) input.value = parseFloat(val).toFixed(2);
+}
+
+function updateQuickBids(base) {
+    const container = document.getElementById('quick-bids');
+    if (!container) return;
+    const increments = [0.05, 0.10, 0.25, 0.50, 1.0];
+    container.innerHTML = increments.map(inc => {
+        const amt = (base + inc).toFixed(2);
+        return `<button class="qb-btn" onclick="setQ(${amt})">+${inc.toFixed(2)}</button>`;
+    }).join('');
+}
+
+function addBidToLog(bidder, amount) {
+    const log = document.getElementById('bid-log');
+    const item = document.createElement('div');
+    item.className = 'bid-log-item new';
+    item.innerHTML = `
+        <div class="bid-log-rank top">1</div>
+        <div class="bid-log-team">${bidder}</div>
+        <div class="bid-log-amount">₹${amount.toFixed(2)}Cr</div>`;
+    // Demote existing #1
+    const existing = log.querySelector('.bid-log-rank.top');
+    if (existing) existing.classList.remove('top');
+    log.insertBefore(item, log.firstChild);
+}
+
+async function placeLiveBid() {
+    if (!currentPlayerId) return;
+    const amount = parseFloat(document.getElementById('bid-input').value);
+    const msg = document.getElementById('live-msg');
+    if (!amount) { showMsg(msg, 'Enter bid amount', 'error'); return; }
+
+    const res = await fetch('/api/bid', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({player_id: currentPlayerId, amount: amount})
+    });
+    const data = await res.json();
+    if (data.success) {
+        showMsg(msg, `✓ Bid of ₹${amount.toFixed(2)} Cr placed!`, 'success');
+        document.getElementById('bid-input').value = '';
+    } else {
+        showMsg(msg, '✗ ' + data.error, 'error');
+    }
+}
+
+function showMsg(el, text, type) {
+    el.style.color = type === 'success' ? 'var(--green)' : 'var(--red)';
+    el.textContent = text;
+    setTimeout(() => el.textContent = '', 4000);
+}
+</script>
+{% endblock %}

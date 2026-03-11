@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+{% block title %}IPL Mega Auction 2025 - Home{% endblock %}
+{% block extra_css %}
+<style>
+.hero {
+    min-height: 90vh;
+    display: flex; align-items: center;
+    padding: 4rem 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url('https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Logo_of_the_Indian_Premier_League.svg/200px-Logo_of_the_Indian_Premier_League.svg.png') center/300px no-repeat;
+    opacity: 0.03;
+}
+
+.hero-inner {
+    max-width: 1400px; margin: 0 auto; width: 100%;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4rem;
+    align-items: center;
+}
+
+.hero-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,69,0,0.15);
+    border: 1px solid rgba(255,69,0,0.4);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px; font-weight: 700; letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+}
+
+.hero-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(32px, 5vw, 60px);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+}
+
+.hero-title .line1 { color: var(--text); }
+.hero-title .line2 { color: var(--gold); text-shadow: 0 0 40px rgba(255,215,0,0.4); }
+.hero-title .line3 { color: var(--accent2); }
+
+.hero-desc {
+    font-size: 16px; color: var(--text-dim); line-height: 1.7;
+    margin-bottom: 2.5rem; max-width: 480px;
+}
+
+.hero-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.btn-lg { padding: 14px 28px; font-size: 15px; }
+
+.stat-grid {
+    display: grid; grid-template-columns: repeat(2,1fr); gap: 12px;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+
+.stat-card:hover { border-color: var(--gold); }
+
+.stat-num {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 32px; font-weight: 900;
+    color: var(--gold);
+}
+
+.stat-label { font-size: 12px; color: var(--text-dim); margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
+
+/* Live player banner */
+.live-banner {
+    background: linear-gradient(135deg, rgba(255,69,0,0.15), rgba(255,107,53,0.1));
+    border: 1px solid rgba(255,69,0,0.4);
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 0 2rem 3rem;
+    max-width: 1400px;
+    margin-left: auto; margin-right: auto;
+    display: flex; align-items: center; gap: 2rem;
+    animation: live-glow 3s infinite;
+}
+
+@keyframes live-glow {
+    0%,100% { box-shadow: 0 0 20px rgba(255,69,0,0.1); }
+    50% { box-shadow: 0 0 40px rgba(255,69,0,0.25); }
+}
+
+.live-banner-badge {
+    background: var(--accent);
+    color: white;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 2px;
+    padding: 6px 14px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    animation: blink-bg 1.5s infinite;
+}
+
+@keyframes blink-bg { 0%,100% { opacity:1 } 50% { opacity:0.6 } }
+
+.live-banner-info { flex: 1; }
+.live-banner-name { font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700; }
+.live-banner-bid { font-size: 14px; color: var(--text-dim); }
+.live-banner-bid span { color: var(--gold); font-weight: 700; font-size: 18px; }
+
+/* Players section */
+.players-section { padding: 4rem 2rem; }
+.section-header {
+    max-width: 1400px; margin: 0 auto 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+}
+
+.player-grid {
+    max-width: 1400px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.player-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+}
+
+.player-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255,215,0,0.5);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+}
+
+.player-card-img {
+    height: 180px;
+    background: linear-gradient(135deg, var(--blue-mid), var(--blue-bright));
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.player-card-img img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+
+.player-card-img .fallback {
+    font-size: 64px; color: rgba(255,215,0,0.2);
+}
+
+.player-card-img .status-overlay {
+    position: absolute; top: 8px; right: 8px;
+}
+
+.player-card-body { padding: 1rem; }
+.player-card-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px; font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.player-card-meta {
+    font-size: 12px; color: var(--text-dim);
+    margin-bottom: 10px;
+}
+
+.player-card-price {
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+.price-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.price-value { font-family: 'Orbitron', sans-serif; font-size: 15px; font-weight: 700; color: var(--gold); }
+
+/* How it works */
+.how-section {
+    padding: 4rem 2rem;
+    background: rgba(13,27,75,0.3);
+}
+
+.steps-grid {
+    max-width: 1400px; margin: 2rem auto 0;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;
+}
+
+.step-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.step-card:hover { border-color: var(--gold); transform: translateY(-3px); }
+
+.step-num {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, var(--gold), #FFA500);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px; font-weight: 900;
+    color: var(--blue-deep);
+    margin: 0 auto 1rem;
+}
+
+.step-title { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.step-desc { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Live Banner -->
+{% if live_player %}
+<div style="padding: 1.5rem 2rem 0; max-width:1400px; margin: 0 auto;">
+    <div class="live-banner">
+        <div class="live-banner-badge">🔴 LIVE</div>
+        <div class="live-banner-info">
+            <div class="live-banner-name">{{ live_player.name }} is UP FOR BID!</div>
+            <div class="live-banner-bid">Current Highest Bid: <span>₹{{ "%.2f"|format(live_player.current_bid or live_player.base_price) }} Cr</span></div>
+        </div>
+        <a href="/auction" class="btn btn-accent btn-lg">Join Auction →</a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Hero -->
+<section class="hero">
+    <div class="hero-inner">
+        <div>
+            <div class="hero-tag">
+                <div class="live-dot" style="background:var(--accent)"></div>
+                SEASON 2025
+            </div>
+            <h1 class="hero-title">
+                <div class="line1">IPL MEGA</div>
+                <div class="line2">AUCTION</div>
+                <div class="line3">LIVE NOW</div>
+            </h1>
+            <p class="hero-desc">
+                Bid on the world's best cricketers in real-time. Watch live auctions, place bids, 
+                compete against other teams, and build your dream IPL squad.
+            </p>
+            <div class="hero-btns">
+                <a href="/players" class="btn btn-gold btn-lg">Browse Players</a>
+                <a href="/auction" class="btn btn-outline btn-lg">Live Auction</a>
+                {% if not session.get('user_id') %}
+                <a href="/register" class="btn btn-blue btn-lg">Register Team</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-num">{{ stats.total_players }}</div>
+                <div class="stat-label">Total Players</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" style="color:var(--green)">{{ stats.sold }}</div>
+                <div class="stat-label">Sold</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" style="color:var(--accent2)">{{ stats.available }}</div>
+                <div class="stat-label">Available</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" style="color:var(--accent)">{{ stats.live }}</div>
+                <div class="stat-label">Live Now</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Players -->
+<section class="players-section">
+    <div class="section-header">
+        <h2 class="section-title">Featured <span>Players</span></h2>
+        <a href="/players" class="btn btn-outline">View All →</a>
+    </div>
+    <div class="player-grid">
+        {% for player in players %}
+        <a href="/player/{{ player.id }}" class="player-card">
+            <div class="player-card-img">
+                {% if player.image_url %}
+                <img src="{{ player.image_url }}" alt="{{ player.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                <div class="fallback" style="display:none"><i class="fas fa-user-circle"></i></div>
+                {% else %}
+                <div class="fallback"><i class="fas fa-user-circle"></i></div>
+                {% endif %}
+                <div class="status-overlay">
+                    {% if player.status == 'live' %}
+                    <span class="badge badge-live">LIVE</span>
+                    {% elif player.status == 'sold' %}
+                    <span class="badge badge-sold">SOLD</span>
+                    {% elif player.status == 'unsold' %}
+                    <span class="badge badge-unsold">UNSOLD</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="player-card-body">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <div class="player-card-name">{{ player.name }}</div>
+                    <span class="badge badge-{{ player.nationality == 'Indian' and 'indian' or 'overseas' }}">
+                        {{ player.nationality == 'Indian' and 'IND' or 'OS' }}
+                    </span>
+                </div>
+                <div style="margin-bottom:8px;">
+                    <span class="badge badge-{{ player.role|lower|replace(' ','') | replace('-','') | replace('wicketkeeper', 'wk') }}">{{ player.role }}</span>
+                </div>
+                <div class="player-card-meta">{{ player.team }}</div>
+                <div class="player-card-price">
+                    <div>
+                        <div class="price-label">Base Price</div>
+                        <div class="price-value">₹{{ player.base_price }} Cr</div>
+                    </div>
+                    {% if player.strike_rate %}
+                    <div style="text-align:right">
+                        <div class="price-label">Strike Rate</div>
+                        <div style="font-size:15px;font-weight:700;color:var(--accent2)">{{ player.strike_rate }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- How it works -->
+<section class="how-section">
+    <div style="max-width:1400px;margin:0 auto;">
+        <h2 class="section-title" style="text-align:center">How The <span>Auction</span> Works</h2>
+    </div>
+    <div class="steps-grid">
+        <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-title">Register Your Team</div>
+            <div class="step-desc">Create an account and get ₹1000 Cr auction budget to spend on players.</div>
+        </div>
+        <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-title">Browse Players</div>
+            <div class="step-desc">Explore player profiles, stats, strike rates, and filter by role or nationality.</div>
+        </div>
+        <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-title">Place Bids</div>
+            <div class="step-desc">When a player goes live, place bids higher than the current highest bid.</div>
+        </div>
+        <div class="step-card">
+            <div class="step-num">4</div>
+            <div class="step-title">Win Players</div>
+            <div class="step-desc">Highest bidder when the hammer falls wins the player for their team.</div>
+        </div>
+    </div>
+</section>
+{% endblock %}
