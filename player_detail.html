@@ -1,0 +1,569 @@
+{% extends "base.html" %}
+{% block title %}{{ player.name }} - IPL Auction{% endblock %}
+{% block extra_css %}
+<style>
+.player-detail-hero {
+    background: linear-gradient(135deg, rgba(13,27,75,0.9), rgba(10,14,39,0.95));
+    border-bottom: 1px solid var(--border);
+    padding: 3rem 2rem;
+}
+
+.detail-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: 300px 1fr; gap: 3rem;
+    align-items: start;
+}
+
+.player-portrait {
+    width: 100%;
+    aspect-ratio: 3/4;
+    border-radius: 16px;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--blue-mid), var(--blue-bright));
+    border: 2px solid var(--border);
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.player-portrait img {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: top;
+}
+
+.player-portrait-fallback {
+    font-size: 120px; color: rgba(255,215,0,0.1);
+}
+
+.status-badge-large {
+    position: absolute; top: 12px; left: 12px;
+}
+
+.player-info-main { }
+
+.player-number {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 80px; font-weight: 900;
+    color: rgba(255,215,0,0.08);
+    line-height: 1;
+    position: absolute; right: 0; top: 0;
+    user-select: none;
+}
+
+.player-detail-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 36px; font-weight: 900;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    line-height: 1.1;
+}
+
+.player-meta-row {
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.info-row {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;
+    margin-bottom: 2rem;
+}
+
+.info-item {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+}
+
+.info-item-lbl { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.info-item-val { font-size: 15px; font-weight: 600; color: var(--text); }
+
+/* Stats section */
+.stats-section { padding: 3rem 2rem; max-width: 1200px; margin: 0 auto; }
+
+.stats-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
+}
+
+.stats-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.stats-card-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px; font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 1.2rem;
+    display: flex; align-items: center; gap: 8px;
+}
+
+.stat-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.stat-row:last-child { border-bottom: none; }
+
+.stat-row-lbl { font-size: 13px; color: var(--text-dim); }
+.stat-row-val { font-size: 15px; font-weight: 700; color: var(--text); }
+
+/* Strike rate bar */
+.sr-bar-container { margin-top: 8px; }
+.sr-bar-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
+.sr-bar-track {
+    height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;
+}
+.sr-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--accent2));
+    border-radius: 4px;
+    transition: width 1s ease;
+}
+
+/* Bid section */
+.bid-section {
+    max-width: 1200px; margin: 0 auto 4rem;
+    padding: 0 2rem;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
+}
+
+.bid-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.75rem;
+}
+
+.bid-panel.active-bid {
+    border-color: rgba(255,69,0,0.5);
+    background: linear-gradient(135deg, rgba(255,69,0,0.08), rgba(13,27,75,0.85));
+}
+
+.bid-panel-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 22px; font-weight: 700;
+    margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 8px;
+}
+
+.current-bid-display {
+    text-align: center;
+    padding: 1.5rem;
+    background: rgba(255,69,0,0.08);
+    border: 1px solid rgba(255,69,0,0.2);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.current-bid-display .lbl { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.current-bid-display .val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 36px; font-weight: 900;
+    color: var(--accent);
+}
+
+.current-bid-display .bidder { font-size: 13px; color: var(--text-dim); margin-top: 6px; }
+.current-bid-display .bidder span { color: var(--gold); font-weight: 600; }
+
+.bid-input-row { display: flex; gap: 10px; margin-bottom: 1rem; }
+
+.bid-input {
+    flex: 1;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px; font-weight: 700;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.bid-input:focus { border-color: var(--gold); }
+
+.quick-bids {
+    display: grid; grid-template-columns: repeat(4,1fr); gap: 6px;
+    margin-bottom: 1rem;
+}
+
+.quick-bid-btn {
+    background: rgba(255,215,0,0.08);
+    border: 1px solid rgba(255,215,0,0.2);
+    border-radius: 6px;
+    padding: 7px;
+    color: var(--gold);
+    font-size: 12px; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Exo 2', sans-serif;
+}
+
+.quick-bid-btn:hover {
+    background: rgba(255,215,0,0.15);
+    border-color: var(--gold);
+}
+
+.bid-history { }
+.bid-history-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.bid-rank {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: rgba(255,215,0,0.15);
+    border: 1px solid rgba(255,215,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: var(--gold);
+    flex-shrink: 0;
+}
+
+.bid-rank.top {
+    background: linear-gradient(135deg, var(--gold), #FFA500);
+    color: var(--blue-deep);
+}
+
+.bid-team { font-size: 14px; font-weight: 600; }
+.bid-amount { font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 700; color: var(--gold); }
+.bid-time { font-size: 11px; color: var(--text-dim); }
+
+.sold-banner {
+    background: linear-gradient(135deg, rgba(0,230,118,0.15), rgba(0,180,90,0.1));
+    border: 1px solid rgba(0,230,118,0.4);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.sold-banner .sold-to { font-size: 13px; color: var(--text-dim); }
+.sold-banner .sold-team { font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700; color: var(--green); }
+.sold-banner .sold-price { font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 900; color: var(--gold); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="player-detail-hero">
+    <div class="detail-inner">
+        <div>
+            <div class="player-portrait">
+                {% if player.image_url %}
+                <img src="{{ player.image_url }}" alt="{{ player.name }}"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                <div class="player-portrait-fallback" style="display:none"><i class="fas fa-user-circle"></i></div>
+                {% else %}
+                <div class="player-portrait-fallback"><i class="fas fa-user-circle"></i></div>
+                {% endif %}
+                <div class="status-badge-large">
+                    {% if player.status == 'live' %}
+                    <span class="badge badge-live">🔴 LIVE</span>
+                    {% elif player.status == 'sold' %}
+                    <span class="badge badge-sold">✓ SOLD</span>
+                    {% elif player.status == 'unsold' %}
+                    <span class="badge badge-unsold">UNSOLD</span>
+                    {% else %}
+                    <span class="badge badge-available">AVAILABLE</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="player-info-main" style="position:relative">
+            <div class="player-meta-row">
+                <span class="badge badge-{{ player.role|lower|replace(' ','')|replace('-','')|replace('wicketkeeper','wk') }}">{{ player.role }}</span>
+                <span class="badge badge-{{ player.nationality == 'Indian' and 'indian' or 'overseas' }}">{{ player.nationality }}</span>
+                <span style="font-size:12px;color:var(--text-dim)"><i class="fas fa-shield-halved"></i> {{ player.team }}</span>
+            </div>
+
+            <h1 class="player-detail-name">{{ player.name }}</h1>
+
+            {% if player.description %}
+            <p style="color:var(--text-dim);font-size:14px;line-height:1.7;margin-bottom:1.5rem;max-width:600px">{{ player.description }}</p>
+            {% endif %}
+
+            <div class="info-row">
+                <div class="info-item">
+                    <div class="info-item-lbl">Age</div>
+                    <div class="info-item-val">{{ player.age }} yrs</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-item-lbl">IPL Caps</div>
+                    <div class="info-item-val">{{ player.ipl_caps }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-item-lbl">Batting</div>
+                    <div class="info-item-val">{{ player.batting_style or '—' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-item-lbl">Bowling</div>
+                    <div class="info-item-val">{{ player.bowling_style or '—' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-item-lbl">Base Price</div>
+                    <div class="info-item-val" style="color:var(--gold);font-family:'Orbitron',sans-serif">₹{{ player.base_price }} Cr</div>
+                </div>
+                {% if player.status == 'sold' %}
+                <div class="info-item" style="border-color:rgba(0,230,118,0.4)">
+                    <div class="info-item-lbl">Sold For</div>
+                    <div class="info-item-val" style="color:var(--green);font-family:'Orbitron',sans-serif">₹{{ player.sold_price }} Cr</div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Strike Rate Bar (highlight) -->
+            {% if player.strike_rate %}
+            <div class="sr-bar-container">
+                <div class="sr-bar-label">
+                    <span>Strike Rate</span>
+                    <span style="color:var(--gold);font-weight:700">{{ player.strike_rate }}</span>
+                </div>
+                <div class="sr-bar-track">
+                    <div class="sr-bar-fill" id="sr-bar" style="width:0%"></div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Stats + Bid -->
+<div class="bid-section" style="padding-top:2.5rem">
+    <!-- Bid Panel -->
+    <div>
+        {% if player.status == 'live' %}
+        <div class="bid-panel active-bid" id="bid-panel">
+            <div class="bid-panel-title">
+                <div class="live-dot" style="background:var(--accent)"></div>
+                Live Auction
+            </div>
+
+            <div class="current-bid-display" id="bid-display">
+                <div class="lbl">Highest Bid</div>
+                <div class="val" id="current-bid-val">₹{{ "%.2f"|format(player.current_bid or player.base_price) }} Cr</div>
+                <div class="bidder" id="current-bidder">
+                    {% if top_bid %}
+                    Leading: <span>{{ top_bid.team_name }}</span>
+                    {% else %}
+                    No bids yet — Base price: ₹{{ player.base_price }} Cr
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if session.get('user_id') %}
+            <div class="bid-input-row">
+                <input type="number" class="bid-input" id="bid-amount"
+                       placeholder="₹ Cr" step="0.05"
+                       min="{{ (player.current_bid or player.base_price) + 0.05 }}">
+                <button class="btn btn-accent" onclick="placeBid()" style="padding:12px 20px;font-size:15px">
+                    BID
+                </button>
+            </div>
+            <div class="quick-bids">
+                {% set base = player.current_bid or player.base_price %}
+                <button class="quick-bid-btn" onclick="setAmount({{ (base + 0.05)|round(2) }})">+0.05</button>
+                <button class="quick-bid-btn" onclick="setAmount({{ (base + 0.1)|round(2) }})">+0.10</button>
+                <button class="quick-bid-btn" onclick="setAmount({{ (base + 0.25)|round(2) }})">+0.25</button>
+                <button class="quick-bid-btn" onclick="setAmount({{ (base + 0.5)|round(2) }})">+0.50</button>
+            </div>
+            <div id="bid-msg" style="font-size:13px;min-height:20px;margin-bottom:8px;color:var(--green)"></div>
+            {% else %}
+            <a href="/login" class="btn btn-gold" style="width:100%;justify-content:center;padding:14px">Login to Bid</a>
+            {% endif %}
+        </div>
+
+        {% elif player.status == 'sold' %}
+        <div class="bid-panel">
+            <div class="sold-banner">
+                <div class="sold-to">SOLD TO</div>
+                <div class="sold-team">{{ player.winning_team or '—' }}</div>
+                <div class="sold-price">₹{{ "%.2f"|format(player.sold_price or 0) }} Cr</div>
+            </div>
+        </div>
+
+        {% else %}
+        <div class="bid-panel">
+            <div class="bid-panel-title"><i class="fas fa-gavel"></i> Auction Status</div>
+            <div style="text-align:center;padding:2rem;color:var(--text-dim)">
+                <i class="fas fa-clock" style="font-size:40px;margin-bottom:1rem;opacity:0.3;display:block"></i>
+                <div style="margin-bottom:8px;font-size:16px;font-weight:600;color:var(--text)">Awaiting Auction</div>
+                <div style="font-size:13px">Base Price: <span style="color:var(--gold);font-weight:700">₹{{ player.base_price }} Cr</span></div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Bid History -->
+    <div>
+        <div class="bid-panel">
+            <div class="bid-panel-title"><i class="fas fa-list-ol" style="color:var(--gold)"></i> Bid History</div>
+            {% if bids %}
+            <div id="bid-history-list">
+                {% for bid in bids %}
+                <div class="bid-history-item">
+                    <div class="bid-rank {% if loop.index == 1 %}top{% endif %}">{{ loop.index }}</div>
+                    <div style="flex:1;margin-left:12px">
+                        <div class="bid-team">{{ bid.team_name }}</div>
+                        <div class="bid-time">{{ bid.timestamp.strftime('%d %b, %H:%M') }}</div>
+                    </div>
+                    <div class="bid-amount">₹{{ "%.2f"|format(bid.amount) }} Cr</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align:center;padding:2rem;color:var(--text-dim)">
+                <i class="fas fa-gavel" style="font-size:32px;opacity:0.3;display:block;margin-bottom:8px"></i>
+                No bids placed yet
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Full Stats -->
+<div class="stats-section">
+    <h2 class="section-title" style="margin-bottom:1.5rem">Career <span>Statistics</span></h2>
+    <div class="stats-grid">
+        {% if player.role in ['Batsman','Wicket-Keeper','All-Rounder'] %}
+        <div class="stats-card">
+            <div class="stats-card-title"><i class="fas fa-baseball-bat-ball"></i> Batting Stats</div>
+            <div class="stat-row">
+                <span class="stat-row-lbl">Matches</span>
+                <span class="stat-row-val">{{ player.matches }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-row-lbl">Runs Scored</span>
+                <span class="stat-row-val" style="color:var(--accent2)">{{ player.runs_scored }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-row-lbl">Batting Average</span>
+                <span class="stat-row-val">{{ player.batting_avg }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-row-lbl">Strike Rate ↑</span>
+                <span class="stat-row-val" style="color:var(--gold)">{{ player.strike_rate }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-row-lbl">50s / 100s</span>
+                <span class="stat-row-val">{{ player.fifties }} / {{ player.hundreds }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-row-lbl">Highest Score</span>
+                <span class="stat-row-val">{{ player.highest_score }}</span>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if player.role in ['Bowler','All-Rounder'] %}
+        <div class="stats-card">
+            <div class="stats-card-title"><i class="fas fa-wind"></i> Bowling Stats</div>
+            <div class="stat-row">
+                <span class="stat-row-lbl">Wickets</span>
+                <span class="stat-row-val" style="color:var(--accent2)">{{ player.wickets }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-row-lbl">Economy ↑</span>
+                <span class="stat-row-val" style="color:var(--green)">{{ player.economy }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-row-lbl">Bowling Average</span>
+                <span class="stat-row-val">{{ player.bowling_avg }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-row-lbl">Best Bowling</span>
+                <span class="stat-row-val" style="color:var(--gold)">{{ player.best_bowling }}</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const playerId = {{ player.id }};
+const socket = io();
+
+socket.emit('join_player', {player_id: playerId});
+socket.emit('join_auction');
+
+socket.on('bid_update', function(data) {
+    if (data.player_id == playerId) {
+        document.getElementById('current-bid-val').textContent = '₹' + data.amount.toFixed(2) + ' Cr';
+        document.getElementById('current-bidder').innerHTML = 'Leading: <span>' + data.bidder + '</span>';
+
+        // Add to history
+        const list = document.getElementById('bid-history-list');
+        if (list) {
+            const item = document.createElement('div');
+            item.className = 'bid-history-item';
+            item.innerHTML = `
+                <div class="bid-rank top">1</div>
+                <div style="flex:1;margin-left:12px">
+                    <div class="bid-team">${data.bidder}</div>
+                    <div class="bid-time">Just now</div>
+                </div>
+                <div class="bid-amount">₹${data.amount.toFixed(2)} Cr</div>
+            `;
+            list.insertBefore(item, list.firstChild);
+        }
+
+        // Update quick bids
+        const newBase = data.amount;
+        const btns = document.querySelectorAll('.quick-bid-btn');
+        const increments = [0.05, 0.10, 0.25, 0.50];
+        btns.forEach((btn, i) => {
+            const newAmt = (newBase + increments[i]).toFixed(2);
+            btn.textContent = '+' + increments[i].toFixed(2);
+            btn.onclick = () => setAmount(parseFloat(newAmt));
+        });
+
+        const input = document.getElementById('bid-amount');
+        if (input) input.min = (newBase + 0.05).toFixed(2);
+    }
+});
+
+function setAmount(val) {
+    document.getElementById('bid-amount').value = val.toFixed(2);
+}
+
+async function placeBid() {
+    const amount = parseFloat(document.getElementById('bid-amount').value);
+    const msg = document.getElementById('bid-msg');
+    if (!amount || amount <= 0) { msg.style.color = 'var(--red)'; msg.textContent = 'Enter a valid bid amount.'; return; }
+
+    const res = await fetch('/api/bid', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({player_id: playerId, amount: amount})
+    });
+    const data = await res.json();
+
+    if (data.success) {
+        msg.style.color = 'var(--green)';
+        msg.textContent = `✓ Bid of ₹${amount.toFixed(2)} Cr placed!`;
+        document.getElementById('bid-amount').value = '';
+    } else {
+        msg.style.color = 'var(--red)';
+        msg.textContent = '✗ ' + data.error;
+    }
+    setTimeout(() => msg.textContent = '', 4000);
+}
+
+// Animate SR bar
+window.addEventListener('load', () => {
+    const bar = document.getElementById('sr-bar');
+    if (bar) {
+        const sr = {{ player.strike_rate or 0 }};
+        const pct = Math.min(sr / 200 * 100, 100);
+        setTimeout(() => bar.style.width = pct + '%', 300);
+    }
+});
+</script>
+{% endblock %}
